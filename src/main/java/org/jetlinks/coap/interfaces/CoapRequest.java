@@ -33,8 +33,8 @@ public interface CoapRequest {
 
     HeaderOptions headers();
 
-    static CoapRequest from(InetSocketAddress address, ByteBuf buf) throws CoapException {
-        return new CoapRequestImpl(CoapPacket.deserialize(address, new ByteBufInputStream(buf)));
+    static CoapRequest from(ByteBuf buf) throws CoapException {
+        return new CoapRequestImpl(CoapPacket.deserialize(new ByteBufInputStream(buf)));
     }
 
 

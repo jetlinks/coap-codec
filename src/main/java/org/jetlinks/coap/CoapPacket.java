@@ -1,7 +1,5 @@
 package org.jetlinks.coap;
 
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
 import org.jetlinks.coap.enums.Code;
 import org.jetlinks.coap.enums.MediaTypes;
 import org.jetlinks.coap.enums.MessageType;
@@ -12,62 +10,55 @@ import org.jetlinks.coap.utils.DataConvertingUtility;
 import org.jetlinks.coap.utils.HexArray;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * @author guyi
+ * @author zhouhao
+ * @since 1.0.0
  */
 public class CoapPacket implements Serializable {
 
-    public static final int               PAYLOAD_MARKER = 0xFF;
-    public static final byte[]            DEFAULT_TOKEN  = new byte[]{};
-    private             byte              version        = 1;
-    private             MessageType       messageType    = MessageType.Confirmable;
-    private             int               messageId;
-    private             Code              code;
-    private             Method            method;
-    private             byte[]            payload        = new byte[0];
-    private final       InetSocketAddress remoteAddress;
-    private             HeaderOptions     options        = new HeaderOptions();
-    private             byte[]            token          = DEFAULT_TOKEN; //opaque
+    public static final int PAYLOAD_MARKER = 0xFF;
+    public static final byte[] DEFAULT_TOKEN = new byte[]{};
+    private byte version = 1;
+    private MessageType messageType = MessageType.Confirmable;
+    private int messageId;
+    private Code code;
+    private Method method;
+    private byte[] payload = new byte[0];
+    private HeaderOptions options = new HeaderOptions();
+    private byte[] token = DEFAULT_TOKEN; //opaque
 
-    public CoapPacket(InetSocketAddress remoteAddress) {
-        this.remoteAddress = remoteAddress;
+    public CoapPacket() {
     }
 
-    public CoapPacket(Code code, MessageType messageType, InetSocketAddress otherEndAddress) {
+    public CoapPacket(Code code, MessageType messageType) {
         this.code = code;
         this.messageType = messageType;
-        this.remoteAddress = otherEndAddress;
     }
 
-    public CoapPacket(Method method, MessageType messageType, String uriPath, InetSocketAddress remoteAddress) {
+    public CoapPacket(Method method, MessageType messageType, String uriPath) {
         this.method = method;
         this.messageType = messageType;
         this.headers().setUriPath(uriPath);
-        this.remoteAddress = remoteAddress;
     }
 
-    public static CoapPacket read(InetSocketAddress remoteAddress, byte[] rawData, int length) throws CoapException {
+    public static CoapPacket read(byte[] rawData, int length) throws CoapException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(rawData, 0, length);
-        CoapPacket cp = new CoapPacket(remoteAddress);
+        CoapPacket cp = new CoapPacket();
         cp.readFrom(inputStream);
 
         return cp;
     }
 
-    public static CoapPacket read(InetSocketAddress remoteAddress, byte[] rawData) throws CoapException {
-        return read(remoteAddress, rawData, rawData.length);
+    public static CoapPacket read(byte[] rawData) throws CoapException {
+        return read(rawData, rawData.length);
     }
 
-    public InetSocketAddress getRemoteAddress() {
-        return remoteAddress;
-    }
-
-    public static CoapPacket deserialize(InetSocketAddress remoteAddress, InputStream inputStream) throws CoapException {
-        CoapPacket coapPacket = new CoapPacket(remoteAddress);
+    public static CoapPacket deserialize(InputStream inputStream) throws CoapException {
+        CoapPacket coapPacket = new CoapPacket();
         coapPacket.readFrom(inputStream);
         return coapPacket;
     }
@@ -143,14 +134,14 @@ public class CoapPacket implements Serializable {
 
     public CoapPacket createResponse(Code responseCode) {
         if (messageType == MessageType.NonConfirmable) {
-            CoapPacket response = new CoapPacket(this.getRemoteAddress());
+            CoapPacket response = new CoapPacket();
             response.setMessageType(MessageType.NonConfirmable);
             response.setCode(responseCode);
             response.setToken(getToken());
             return response;
         }
         if (messageType == MessageType.Confirmable) {
-            CoapPacket response = new CoapPacket(this.getRemoteAddress());
+            CoapPacket response = new CoapPacket();
             response.setMessageId(this.messageId);
             response.setMessageType(MessageType.Acknowledgement);
             response.setCode(responseCode);
@@ -161,7 +152,7 @@ public class CoapPacket implements Serializable {
             return response;
         }
         if (messageType == null && method != null) {
-            CoapPacket response = new CoapPacket(this.getRemoteAddress());
+            CoapPacket response = new CoapPacket();
             response.setMessageId(this.messageId);
             response.setToken(getToken());
             response.setCode(responseCode);
@@ -318,10 +309,6 @@ public class CoapPacket implements Serializable {
     public String toString(boolean printFullPayload, boolean printPayloadOnlyAsHex, boolean printAddress, boolean doNotPrintPayload) {
         StringBuilder sb = new StringBuilder();
 
-        if (printAddress && this.getRemoteAddress() != null) {
-            sb.append(this.getRemoteAddress()).append(' ');
-        }
-
         if (messageType != null) {
             sb.append(getMessageType().toString());
         }
@@ -396,7 +383,6 @@ public class CoapPacket implements Serializable {
         hash = 41 * hash + Objects.hashCode(this.code);
         hash = 41 * hash + Objects.hashCode(this.method);
         hash = 41 * hash + Arrays.hashCode(this.payload);
-        hash = 41 * hash + Objects.hashCode(this.remoteAddress);
         hash = 41 * hash + Objects.hashCode(this.options);
         hash = 41 * hash + Arrays.hashCode(this.token);
         return hash;
@@ -427,9 +413,6 @@ public class CoapPacket implements Serializable {
             return false;
         }
         if (!Arrays.equals(this.payload, other.payload)) {
-            return false;
-        }
-        if (!Objects.equals(this.remoteAddress, other.remoteAddress)) {
             return false;
         }
         if (!Objects.equals(this.options, other.options)) {
