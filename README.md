@@ -1,20 +1,22 @@
 # coap-codec
 coap编解码器
 
-### CoapRequest
-Coap请求包装
-#### 创建
-``` java
-CoapRequest.from(ByteBuf buf)
-```
-从ByteBuf中创建请求包装
+```java
+//encode
+CoapPacket coapPacket = new CoapPacket();
+coapPacket.setCode(Code.C205_CONTENT);
+coapPacket.setPayload("{}");
+coapPacket.headers().setContentFormat(MediaTypes.CT_TEXT_PLAIN);
 
-### CoapResponse
-Coap响应包装
-#### 创建
-``` java
-CoapRequest.createResponse()
-CoapRequest.createResponse(Code code)
-CoapResponse.from(CoapRequest request)
-CoapResponse.from(CoapRequest request,Code code)
+coapPacket.writeTo(outputStream);
+
+
+//decode
+ CoapPacket packet = CoapPacket.deserialize(inputStream);
+ 
+ packet.headers();
+ 
+ packet.getPayloadString();
+
+
 ```

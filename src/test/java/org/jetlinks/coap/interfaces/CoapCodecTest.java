@@ -14,7 +14,7 @@ import java.io.ByteArrayOutputStream;
  * @author zhouhao
  * @since 1.0.0
  */
-public class CoapRequestTest {
+public class CoapCodecTest {
 
 
     @Test
